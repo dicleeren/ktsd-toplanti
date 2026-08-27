@@ -8,7 +8,13 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ktsd-sec-key-2026-secret-poll-token-auth-restricted'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ktsd_poll.db'
+
+# Ensure instance directory exists for SQLite DB on cloud servers (Render/Linux)
+basedir = os.path.abspath(os.path.dirname(__file__))
+instance_path = os.path.join(basedir, 'instance')
+os.makedirs(instance_path, exist_ok=True)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_path, 'ktsd_poll.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -30,9 +36,9 @@ class Poll(db.Model):
     description = db.Column(db.Text, nullable=True)
     organizer_name = db.Column(db.String(120), nullable=False)
     organizer_company = db.Column(db.String(150), nullable=True)
-    authorized_emails = db.Column(db.Text, nullable=True)  # Comma separated authorized staff emails
+    authorized_emails = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(20), default='active')  # active, finalized
+    status = db.Column(db.String(20), default='active')
     final_option_id = db.Column(db.Integer, nullable=True)
 
     options = db.relationship('Option', backref='poll', cascade='all, delete-orphan', order_by='Option.order_num')
@@ -70,7 +76,7 @@ class VoteDetail(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     vote_id = db.Column(db.Integer, db.ForeignKey('votes.id'), nullable=False)
     option_id = db.Column(db.Integer, db.ForeignKey('options.id'), nullable=False)
-    status = db.Column(db.String(10), nullable=False)  # 'yes', 'maybe', 'no'
+    status = db.Column(db.String(10), nullable=False)
 
 with app.app_context():
     db.create_all()
@@ -109,7 +115,6 @@ def create_poll():
         flash("Lütfen toplantı başlığını ve düzenleyen adını giriniz.", "danger")
         return redirect(url_for('index'))
 
-    # Clean valid date/time options
     valid_options = []
     for i in range(len(dates)):
         d = dates[i].strip() if i < len(dates) else ''
@@ -151,12 +156,9 @@ def create_poll():
     flash("Toplantı anketi başarıyla oluşturuldu!", "success")
     return redirect(url_for('view_poll', slug=slug))
 
-# PUBLIC MEMBER VIEW: Only voting form, NO collective results
 @app.route('/poll/<slug>')
 def view_poll(slug):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
-    
-    # Check if member just voted
     voted_flag = request.args.get('voted', '0') == '1'
 
     final_option = None
@@ -168,7 +170,6 @@ def view_poll(slug):
                            voted_flag=voted_flag,
                            final_option=final_option)
 
-# MEMBER VOTE SUBMISSION
 @app.route('/poll/<slug>/vote', methods=['POST'])
 def submit_vote(slug):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
@@ -209,7 +210,6 @@ def submit_vote(slug):
     flash(f"Teşekkürler {member_name}, katılım tercihleriniz başarıyla alındı ve kaydedildi!", "success")
     return redirect(url_for('view_poll', slug=slug, voted=1))
 
-# KTSD STAFF RESTRICTED RESULTS DASHBOARD
 @app.route('/poll/<slug>/results')
 def view_results(slug):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
@@ -217,7 +217,6 @@ def view_results(slug):
     authorized_list = poll.get_authorized_email_list()
     current_staff_email = session.get(f'staff_email_{poll.id}')
 
-    # Check authentication
     is_authenticated = False
     if current_staff_email and current_staff_email.lower() in authorized_list:
         is_authenticated = True
@@ -225,7 +224,6 @@ def view_results(slug):
     if not is_authenticated:
         return render_template('results_auth.html', poll=poll, authorized_count=len(authorized_list))
 
-    # Stats per option
     stats = {}
     for opt in poll.options:
         stats[opt.id] = {'yes': 0, 'maybe': 0, 'no': 0, 'score': 0}
@@ -235,7 +233,6 @@ def view_results(slug):
             if detail.option_id in stats:
                 stats[detail.option_id][detail.status] += 1
 
-    # Best option calculation
     best_option_id = None
     max_score = -1
     for opt_id, s in stats.items():
@@ -245,7 +242,6 @@ def view_results(slug):
             max_score = score
             best_option_id = opt_id
 
-    # Matrix lookup
     vote_matrix = {}
     for vote in poll.votes:
         vote_matrix[vote.id] = {}
@@ -265,7 +261,6 @@ def view_results(slug):
                            staff_email=current_staff_email,
                            authorized_list=authorized_list)
 
-# KTSD STAFF AUTHENTICATION ROUTE
 @app.route('/poll/<slug>/auth', methods=['POST'])
 def staff_auth(slug):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
@@ -292,7 +287,6 @@ def staff_logout(slug):
 def delete_vote(slug, vote_id):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
-    # Require staff auth to delete vote
     authorized_list = poll.get_authorized_email_list()
     current_staff_email = session.get(f'staff_email_{poll.id}')
     if not current_staff_email or current_staff_email.lower() not in authorized_list:
@@ -309,7 +303,6 @@ def delete_vote(slug, vote_id):
 def finalize_poll(slug):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
-    # Require staff auth to finalize
     authorized_list = poll.get_authorized_email_list()
     current_staff_email = session.get(f'staff_email_{poll.id}')
     if not current_staff_email or current_staff_email.lower() not in authorized_list:
@@ -345,7 +338,6 @@ def reopen_poll(slug):
 def export_csv(slug):
     poll = Poll.query.filter_by(slug=slug).first_or_404()
 
-    # Require staff auth to export
     authorized_list = poll.get_authorized_email_list()
     current_staff_email = session.get(f'staff_email_{poll.id}')
     if not current_staff_email or current_staff_email.lower() not in authorized_list:
