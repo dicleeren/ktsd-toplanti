@@ -19,7 +19,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Official KTSD Staff Emails requested by user
+# Official KTSD Staff Emails
 DEFAULT_STAFF_EMAILS = [
     "dicle.eren@ktsd.org.tr",
     "ilayda.huban@ktsd.org.tr",
@@ -87,13 +87,13 @@ def init_db():
 
 init_db()
 
-# EMBEDDED HTML TEMPLATES
+# EMBEDDED HTML TEMPLATES (Doodle Style + Authorized Analytics Dashboard)
 BASE_HTML = """<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}KTSD Toplantı ve Tarih Belirleme Portalı{% endblock %}</title>
+  <title>{% block title %}KTSD Toplantı Portalı{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -102,68 +102,82 @@ BASE_HTML = """<!DOCTYPE html>
     :root {
       --ktsd-blue: #005BB5;
       --ktsd-blue-dark: #003D7A;
-      --ktsd-blue-light: #0284C7;
-      --bg-light: #F4F7FA;
+      --bg-light: #F8FAFC;
       --card-bg: #FFFFFF;
-      --status-yes-bg: #ECFDF5; --status-yes-color: #065F46; --status-yes-btn: #10B981;
-      --status-maybe-bg: #FFFBEB; --status-maybe-color: #92400E; --status-maybe-btn: #F59E0B;
-      --status-no-bg: #FEF2F2; --status-no-color: #991B1B; --status-no-btn: #EF4444;
+      --status-yes-bg: #E6F4EA; --status-yes-color: #137333; --status-yes-btn: #10B981;
+      --status-maybe-bg: #FEF7E0; --status-maybe-color: #B06000; --status-maybe-btn: #F59E0B;
+      --status-no-bg: #F1F3F4; --status-no-color: #5F6368; --status-no-btn: #EF4444;
       --radius-sm: 8px; --radius-md: 14px;
-      --shadow-md: 0 10px 25px -5px rgba(0, 91, 181, 0.12);
+      --shadow-md: 0 8px 24px -4px rgba(0, 91, 181, 0.12);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg-light); color: #1E293B; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
-    .ktsd-header { background: #FFFFFF; padding: 1rem 2rem; box-shadow: 0 4px 20px rgba(0, 61, 122, 0.1); position: sticky; top: 0; z-index: 100; border-bottom: 4px solid var(--ktsd-blue); }
-    .header-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-    .ktsd-brand { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: #1E293B; }
-    .ktsd-logo-badge { background: var(--ktsd-blue); color: white; padding: 0.4rem 0.8rem; border-radius: 10px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-light); color: #202124; line-height: 1.5; min-height: 100vh; display: flex; flex-direction: column; }
+    .ktsd-header { background: #FFFFFF; padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0, 61, 122, 0.08); position: sticky; top: 0; z-index: 100; border-bottom: 4px solid var(--ktsd-blue); }
+    .header-container { max-width: 1250px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .ktsd-brand { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: #202124; }
+    .ktsd-logo-badge { background: var(--ktsd-blue); color: white; padding: 0.45rem 0.85rem; border-radius: 10px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem; }
     .brand-text h1 { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--ktsd-blue-dark); }
-    .brand-text p { font-size: 0.78rem; color: #64748B; }
+    .brand-text p { font-size: 0.78rem; color: #5F6368; }
     .btn-header { background: var(--ktsd-blue); color: white; padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.88rem; font-weight: 600; }
     .btn-header:hover { background: var(--ktsd-blue-dark); }
     .btn-header-outline { border: 1.5px solid var(--ktsd-blue-dark); color: var(--ktsd-blue-dark); padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.88rem; font-weight: 600; }
-    .main-wrapper { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; flex: 1; width: 100%; }
-    .card { background: white; border-radius: var(--radius-md); box-shadow: var(--shadow-md); border: 1px solid #E2E8F0; padding: 2rem; margin-bottom: 2rem; }
-    .card-header { border-bottom: 2px solid #F1F5F9; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .hero-section { background: linear-gradient(135deg, #005BB5 0%, #003D7A 100%); color: white; padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem; }
+    .main-wrapper { max-width: 1250px; margin: 2rem auto; padding: 0 1.5rem; flex: 1; width: 100%; }
+    .card { background: white; border-radius: var(--radius-md); box-shadow: var(--shadow-md); border: 1px solid #E8EAED; padding: 2rem; margin-bottom: 2rem; }
+    .hero-section { background: linear-gradient(135deg, #005BB5 0%, #003D7A 100%); color: white; padding: 2.25rem; border-radius: var(--radius-md); margin-bottom: 2rem; }
     .form-group { margin-bottom: 1.25rem; }
     .form-label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--ktsd-blue-dark); margin-bottom: 0.4rem; }
-    .form-control { width: 100%; padding: 0.75rem 1rem; font-size: 0.95rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); }
+    .form-control { width: 100%; padding: 0.75rem 1rem; font-size: 0.95rem; border: 1.5px solid #BDC1C6; border-radius: var(--radius-sm); }
     .btn-primary { background: var(--ktsd-blue); color: white; padding: 0.85rem 1.75rem; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
     .btn-primary:hover { background: var(--ktsd-blue-dark); }
-    .btn-teal { background: #10B981; color: white; padding: 0.85rem 1.75rem; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; }
+    .btn-teal { background: #1e8e3e; color: white; padding: 0.85rem 1.75rem; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; }
     .btn-outline { border: 1.5px solid var(--ktsd-blue-dark); color: var(--ktsd-blue-dark); padding: 0.5rem 1rem; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; font-size: 0.88rem; background: transparent; cursor: pointer; }
-    .option-row { display: grid; grid-template-columns: 1fr 1fr 45px; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem; background: #F8FAFC; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px dashed #CBD5E1; }
-    .btn-remove-row { background: #FEE2E2; color: #EF4444; border: 1px solid #FECACA; width: 40px; height: 40px; border-radius: 6px; cursor: pointer; }
     .share-banner { background: #003D7A; color: white; padding: 1.25rem 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
     
-    /* Calendar Grid Matrix for Member Voting */
-    .calendar-matrix { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
-    .calendar-card { background: white; border: 2px solid #CBD5E1; border-radius: 12px; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-    .calendar-card:hover { border-color: var(--ktsd-blue); transform: translateY(-2px); }
-    .calendar-card-header { background: linear-gradient(135deg, #005BB5 0%, #003D7A 100%); color: white; padding: 0.85rem 1rem; text-align: center; }
-    .calendar-card-date { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 700; }
-    .calendar-card-time { font-size: 0.85rem; color: #E0F2FE; margin-top: 0.2rem; }
-    .calendar-card-body { padding: 1.25rem; text-align: center; }
-    
-    /* Side by side button toggles (Green ✓, Yellow ?, Red ✗) */
-    .toggle-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; justify-content: center; }
-    .toggle-btn { flex: 1; padding: 0.65rem 0.25rem; border-radius: 8px; border: 1.5px solid #CBD5E1; background: white; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
-    .toggle-btn input[type="radio"] { display: none; }
-    .toggle-btn.btn-yes:has(input:checked), .toggle-btn.btn-yes.active { background: #10B981; color: white; border-color: #10B981; box-shadow: 0 3px 8px rgba(16,185,129,0.3); }
-    .toggle-btn.btn-maybe:has(input:checked), .toggle-btn.btn-maybe.active { background: #F59E0B; color: white; border-color: #F59E0B; box-shadow: 0 3px 8px rgba(245,158,11,0.3); }
-    .toggle-btn.btn-no:has(input:checked), .toggle-btn.btn-no.active { background: #EF4444; color: white; border-color: #EF4444; box-shadow: 0 3px 8px rgba(239,68,68,0.3); }
+    /* ANALYTICS STAT CARDS */
+    .stat-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
+    .stat-card { background: #F8F9FA; border: 1px solid #DADCE0; border-radius: 12px; padding: 1.25rem; text-align: center; }
+    .stat-card-title { font-size: 0.82rem; font-weight: 700; color: #5F6368; text-transform: uppercase; margin-bottom: 0.3rem; }
+    .stat-card-val { font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--ktsd-blue-dark); }
+    .stat-card-sub { font-size: 0.8rem; color: #1e8e3e; font-weight: 600; margin-top: 0.2rem; }
 
-    .matrix-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem; }
-    .matrix-table th, .matrix-table td { padding: 0.85rem; border: 1px solid #E2E8F0; }
-    .matrix-table th { background: #F8FAFC; color: var(--ktsd-blue-dark); font-weight: 600; }
-    .badge-status { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
-    .badge-yes { background: #ECFDF5; color: #065F46; border: 2px solid #A7F3D0; }
-    .badge-maybe { background: #FFFBEB; color: #92400E; border: 2px solid #FDE68A; }
-    .badge-no { background: #FEF2F2; color: #991B1B; border: 2px solid #FECACA; }
+    .best-date-box { background: linear-gradient(135deg, #E6F4EA 0%, #CEEAD6 100%); border: 2px solid #34A853; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    
+    /* DOODLE STYLE MATRIX TABLE & CARDS */
+    .doodle-table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #DADCE0; border-radius: 12px; background: white; margin-top: 1rem; }
+    .doodle-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .doodle-header-cell { background: #F8F9FA; padding: 1rem 0.75rem; text-align: center; border-bottom: 2px solid #DADCE0; border-right: 1px solid #E8EAED; min-width: 140px; }
+    .doodle-header-participant { background: #F1F3F4; padding: 1rem; text-align: left; border-bottom: 2px solid #DADCE0; border-right: 2px solid #DADCE0; min-width: 220px; font-weight: 700; color: var(--ktsd-blue-dark); }
+    
+    .doodle-date-card { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+    .doodle-star { color: #F9AB00; font-size: 0.9rem; }
+    .doodle-date-num { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; color: #202124; line-height: 1; }
+    .doodle-date-day { font-size: 0.8rem; font-weight: 700; color: #5F6368; text-transform: uppercase; }
+    .doodle-time-text { font-size: 0.78rem; color: #3C4043; font-weight: 600; margin-top: 0.25rem; background: #E8F0FE; padding: 0.15rem 0.4rem; border-radius: 4px; }
+    .doodle-voters-count { font-size: 0.75rem; color: #5F6368; margin-top: 0.3rem; display: flex; align-items: center; gap: 0.25rem; }
+    
+    .doodle-row-participant { padding: 0.85rem 1rem; border-bottom: 1px solid #E8EAED; border-right: 2px solid #DADCE0; background: #FFFFFF; display: flex; align-items: center; gap: 0.65rem; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--ktsd-blue); color: white; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
+    .participant-info { line-height: 1.2; }
+    .participant-name { font-weight: 700; font-size: 0.92rem; color: #202124; }
+    .participant-sub { font-size: 0.75rem; color: #5F6368; }
+
+    .doodle-cell { padding: 0.65rem; border-bottom: 1px solid #E8EAED; border-right: 1px solid #E8EAED; text-align: center; vertical-align: middle; }
+    
+    .pill-badge { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; font-size: 1.1rem; font-weight: 800; }
+    .pill-yes { background: #E6F4EA; color: #137333; }
+    .pill-maybe { background: #FEF7E0; color: #B06000; }
+    .pill-no { background: #F1F3F4; color: #70757A; }
+
+    .vote-toggle-pill { display: flex; gap: 0.25rem; justify-content: center; }
+    .v-btn { width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid #DADCE0; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; transition: all 0.15s ease; }
+    .v-btn input[type="radio"] { display: none; }
+    .v-btn.v-yes:has(input:checked), .v-btn.v-yes.active { background: #137333; color: white; border-color: #137333; }
+    .v-btn.v-maybe:has(input:checked), .v-btn.v-maybe.active { background: #F59E0B; color: white; border-color: #F59E0B; }
+    .v-btn.v-no:has(input:checked), .v-btn.v-no.active { background: #5F6368; color: white; border-color: #5F6368; }
+
     .ktsd-footer { background: var(--ktsd-blue-dark); color: #93C5FD; padding: 1.5rem; text-align: center; font-size: 0.85rem; margin-top: auto; }
-    .alert { padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.92rem; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-    .alert-danger { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
+    .alert { padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.92rem; background: #E6F4EA; color: #137333; border: 1px solid #CEEAD6; }
+    .alert-danger { background: #FCE8E6; color: #C5221F; border-color: #FAD2CF; }
   </style>
 </head>
 <body>
@@ -207,10 +221,18 @@ BASE_HTML = """<!DOCTYPE html>
         if (!optContainer) return;
         const row = document.createElement('div');
         row.className = 'option-row';
+        row.style.display = 'grid';
+        row.style.gridTemplateColumns = '1fr 1fr 45px';
+        row.style.gap = '0.75rem';
+        row.style.marginBottom = '0.75rem';
+        row.style.background = '#F8FAFC';
+        row.style.padding = '0.75rem';
+        row.style.borderRadius = '8px';
+        row.style.border = '1px dashed #CBD5E1';
         row.innerHTML = `
           <div><input type="date" name="option_date[]" class="form-control" value="${d}" required></div>
           <div><input type="text" name="option_time[]" class="form-control" value="${t}" placeholder="Örn: 09:00 - 10:00"></div>
-          <div><button type="button" class="btn-remove-row">×</button></div>
+          <div><button type="button" class="btn-remove-row" style="background:#FEE2E2; color:#EF4444; border:1px solid #FECACA; width:40px; height:40px; border-radius:6px; cursor:pointer;">×</button></div>
         `;
         optContainer.appendChild(row);
       }
@@ -238,14 +260,13 @@ BASE_HTML = """<!DOCTYPE html>
         });
       }
 
-      // Interactive Toggle Button Click for Member Calendar Voting
-      document.querySelectorAll('.toggle-btn').forEach(btn => {
+      document.querySelectorAll('.v-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const radio = this.querySelector('input[type="radio"]');
           if (radio) {
             const name = radio.getAttribute('name');
             document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
-              r.closest('.toggle-btn').classList.remove('active');
+              r.closest('.v-btn').classList.remove('active');
             });
             radio.checked = true;
             this.classList.add('active');
@@ -271,7 +292,7 @@ INDEX_HTML = """{% extends 'base.html' %}
 {% block content %}
 <div class="hero-section">
   <h2><i class="fas fa-calendar-alt"></i> Kurumsal Toplantı Tarihi Planlayıcı</h2>
-  <p>KTSD Yönetim Kurulu ve Komite toplantılarınız için üyelere takvim düzeninde anket bağlantısı gönderin. Üyeler sadece tarih seçimi yapabilir; toplu sonuçlar yetkili KTSD çalışanlarına özeldir.</p>
+  <p>Doodle stili takvim kartları ile üyelere toplantı anketi bağlantısı gönderin. Üyeler sadece tarih seçimi yapabilir; toplu sonuçlar yetkili KTSD çalışanlarına özeldir.</p>
 </div>
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
   <div class="card">
@@ -300,7 +321,7 @@ INDEX_HTML = """{% extends 'base.html' %}
       <div class="form-group" style="background:#F0F9FF; padding:1rem; border-radius:8px; border:1px solid #BAE6FD;">
         <label class="form-label" style="color:#0369A1;"><i class="fas fa-user-shield"></i> Sonuçları Görmeye Yetkili KTSD E-posta Adresleri</label>
         <input type="text" name="authorized_emails" class="form-control" value="{{ default_emails_str }}">
-        <small style="color:#0284C7; display:block; margin-top:0.3rem;">KTSD Yetkili Çalışanları: dicle.eren@ktsd.org.tr, ilayda.huban@ktsd.org.tr, ilayda.kaya@ktsd.org.tr, turkan.dundar@ktsd.org.tr</small>
+        <small style="color:#0284C7; display:block; margin-top:0.3rem;">Yetkili KTSD Mailleri: dicle.eren@ktsd.org.tr, ilayda.huban@ktsd.org.tr, ilayda.kaya@ktsd.org.tr, turkan.dundar@ktsd.org.tr</small>
       </div>
       <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1.25rem; border-radius:8px; margin-bottom:1.5rem;">
         <h4 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-magic"></i> Otomatik Saat Üretici (09:00 - 17:00)</h4>
@@ -325,10 +346,10 @@ INDEX_HTML = """{% extends 'base.html' %}
       <div class="form-group">
         <label class="form-label"><i class="fas fa-clock"></i> Alternatif Tarih ve Saat Listesi *</label>
         <div id="options-container">
-          <div class="option-row">
+          <div class="option-row" style="display:grid; grid-template-columns:1fr 1fr 45px; gap:0.75rem; margin-bottom:0.75rem; background:#F8FAFC; padding:0.75rem; border-radius:8px; border:1px dashed #CBD5E1;">
             <div><input type="date" name="option_date[]" class="form-control" required></div>
             <div><input type="text" name="option_time[]" class="form-control" placeholder="Örn: 09:00 - 10:00"></div>
-            <div><button type="button" class="btn-remove-row">×</button></div>
+            <div><button type="button" class="btn-remove-row" style="background:#FEE2E2; color:#EF4444; border:1px solid #FECACA; width:40px; height:40px; border-radius:6px; cursor:pointer;">×</button></div>
           </div>
         </div>
         <button type="button" id="add-option-btn" class="btn-outline" style="width:100%; margin-top:0.5rem;"><i class="fas fa-plus"></i> Seçenek Ekle</button>
@@ -360,7 +381,7 @@ POLL_HTML = """{% extends 'base.html' %}
 <div class="share-banner">
   <div>
     <h3 style="font-family:'Outfit',sans-serif;"><i class="fas fa-link"></i> Anket Paylaşım Bağlantısı</h3>
-    <p style="font-size:0.88rem; color:#93C5FD;">Bu bağlantıyı üyelerinize göndererek oy kullanmalarını sağlayın.</p>
+    <p style="font-size:0.88rem; color:#93C5FD;">Bu bağlantıyı üyelerinize göndererek oylarını alabilirsiniz.</p>
   </div>
   <div style="display:flex; gap:0.5rem;">
     <input type="text" id="share-poll-url" value="{{ request.url }}" readonly style="padding:0.5rem; border-radius:4px; border:none; width:280px;">
@@ -381,55 +402,70 @@ POLL_HTML = """{% extends 'base.html' %}
   <div style="background:#ECFDF5; border:2px solid #A7F3D0; padding:1.5rem; border-radius:12px; text-align:center; margin-bottom:2rem;">
     <i class="fas fa-check-circle" style="font-size:2.5rem; color:#059669;"></i>
     <h3 style="color:#065F46; margin-top:0.5rem;">Katılım Tercihleriniz Kaydedilmiştir!</h3>
-    <p style="color:#047857;">Toplantı tarihi kesinleştiğinde KTSD tarafından bilgilendirme yapılacaktır. Katılımınız için teşekkür ederiz.</p>
+    <p style="color:#047857;">Toplantı tarihi kesinleştiğinde bilgilendirme yapılacaktır. Teşekkür ederiz.</p>
   </div>
 {% endif %}
 
 {% if poll.status == 'active' %}
-  <div class="card" style="background:#F8FAFC;">
-    <h3 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-calendar-check" style="color:var(--ktsd-blue);"></i> Takvim Oylama Ekranı</h3>
-    <p style="font-size:0.88rem; color:#64748B; margin-bottom:1.5rem;">Lütfen adınızı girerek aşağıdaki tarih alternatifleri için durumunuzu (🟢 Yeşil Tik: Uygun, 🟡 Sarı Soru: Olabilir, 🔴 Kırmızı Çarpı: Değil) seçin.</p>
+  <div class="card">
+    <h3 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-calendar-alt" style="color:var(--ktsd-blue);"></i> Doodle Stili Takvim Oylaması</h3>
+    <p style="font-size:0.88rem; color:#5F6368; margin-bottom:1.5rem;">Lütfen adınızı girerek aşağıdaki tarih sütunlarında durumunuzu (✓ Uygun, ? Olabilir, ✗ Değil) seçin.</p>
     
     <form action="{{ url_for('submit_vote', slug=poll.slug) }}" method="POST">
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1.75rem; background:white; padding:1.25rem; border-radius:10px; border:1px solid #E2E8F0;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1.5rem; background:#F8F9FA; padding:1.25rem; border-radius:10px; border:1px solid #DADCE0;">
         <div><label class="form-label">Adınız Soyadınız *</label><input type="text" name="member_name" class="form-control" placeholder="Örn: Mehmet Özkan" required></div>
         <div><label class="form-label">Üye Kurum / Firma</label><input type="text" name="member_company" class="form-control" placeholder="Örn: ABC Kimya A.Ş."></div>
         <div><label class="form-label">E-posta Adresiniz</label><input type="email" name="member_email" class="form-control" placeholder="Örn: mehmet@abckimya.com"></div>
       </div>
 
-      <!-- HORIZONTAL CALENDAR GRID FOR MEMBERS -->
-      <div class="calendar-matrix">
-        {% for opt in poll.options %}
-          <div class="calendar-card">
-            <div class="calendar-card-header">
-              <div class="calendar-card-date"><i class="fas fa-calendar-day"></i> {{ opt.date_val }}</div>
-              <div class="calendar-card-time"><i class="fas fa-clock"></i> {{ opt.time_val }}</div>
-            </div>
-            <div class="calendar-card-body">
-              <div style="font-size:0.8rem; font-weight:600; color:#64748B; margin-bottom:0.5rem;">KATILIM DURUMUNUZ</div>
-              <div class="toggle-group">
-                <label class="toggle-btn btn-yes active">
-                  <input type="radio" name="opt_{{ opt.id }}" value="yes" checked>
-                  <i class="fas fa-check-circle" style="font-size:1.2rem;"></i>
-                  <span>✓ Uygun</span>
-                </label>
-                <label class="toggle-btn btn-maybe">
-                  <input type="radio" name="opt_{{ opt.id }}" value="maybe">
-                  <i class="fas fa-question-circle" style="font-size:1.2rem;"></i>
-                  <span>? Olabilir</span>
-                </label>
-                <label class="toggle-btn btn-no">
-                  <input type="radio" name="opt_{{ opt.id }}" value="no">
-                  <i class="fas fa-times-circle" style="font-size:1.2rem;"></i>
-                  <span>✗ Değil</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
+      <!-- HORIZONTAL CALENDAR MATRIX TABLE -->
+      <div class="doodle-table-wrapper">
+        <table class="doodle-table">
+          <thead>
+            <tr>
+              <th class="doodle-header-participant">Katılımcı / Tarihler</th>
+              {% for opt in poll.options %}
+                <th class="doodle-header-cell">
+                  <div class="doodle-date-card">
+                    <div class="doodle-star">⭐</div>
+                    <div class="doodle-date-num">{{ opt.date_val.split()[0] if opt.date_val else '' }}</div>
+                    <div class="doodle-date-day">{{ opt.date_val.split()[1] if opt.date_val.split()|length > 1 else '' }} {{ opt.date_val.split()[-1] if opt.date_val.split()|length > 2 else '' }}</div>
+                    <div class="doodle-time-text"><i class="far fa-clock"></i> {{ opt.time_val }}</div>
+                  </div>
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#F0F7FF;">
+              <td class="doodle-row-participant" style="background:#E8F0FE;">
+                <div class="avatar-circle" style="background:#1A73E8;">SİZ</div>
+                <div class="participant-info">
+                  <div class="participant-name" style="color:#1A73E8;">Sizin Tercihiniz</div>
+                  <div class="participant-sub">Aşağıdan seçin</div>
+                </div>
+              </td>
+              {% for opt in poll.options %}
+                <td class="doodle-cell">
+                  <div class="vote-toggle-pill">
+                    <label class="v-btn v-yes active" title="Uygun">
+                      <input type="radio" name="opt_{{ opt.id }}" value="yes" checked> ✓
+                    </label>
+                    <label class="v-btn v-maybe" title="Olabilir">
+                      <input type="radio" name="opt_{{ opt.id }}" value="maybe"> ?
+                    </label>
+                    <label class="v-btn v-no" title="Uygun Değil">
+                      <input type="radio" name="opt_{{ opt.id }}" value="no"> ✗
+                    </label>
+                  </div>
+                </td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div style="text-align:right; margin-top:1.75rem;">
+      <div style="text-align:right; margin-top:1.5rem;">
         <button type="submit" class="btn-teal" style="font-size:1.1rem; padding:0.9rem 2.2rem;"><i class="fas fa-paper-plane"></i> Katılım Durumumu Kaydet</button>
       </div>
     </form>
@@ -442,7 +478,7 @@ RESULTS_AUTH_HTML = """{% extends 'base.html' %}
 {% block content %}
 <div style="max-width:520px; margin:3rem auto;" class="card">
   <h2 style="color:var(--ktsd-blue-dark); text-align:center; margin-bottom:1rem;"><i class="fas fa-user-shield"></i> KTSD Yetkili Girişi</h2>
-  <p style="font-size:0.88rem; color:#64748B; text-align:center; margin-bottom:1.5rem;">Bu anketin toplu sonuçları sadece tanımlı yetkili KTSD e-posta adresleri (dicle.eren, ilayda.huban, ilayda.kaya, turkan.dundar@ktsd.org.tr) tarafından görüntülenebilir.</p>
+  <p style="font-size:0.88rem; color:#5F6368; text-align:center; margin-bottom:1.5rem;">Bu anketin toplu sonuçları sadece yetkili KTSD e-posta adresleri (dicle.eren, ilayda.huban, ilayda.kaya, turkan.dundar@ktsd.org.tr) tarafından görüntülenebilir.</p>
   <form action="{{ url_for('staff_auth', slug=poll.slug) }}" method="POST">
     <div class="form-group">
       <label class="form-label">Yetkili KTSD E-posta Adresiniz</label>
@@ -454,57 +490,167 @@ RESULTS_AUTH_HTML = """{% extends 'base.html' %}
 {% endblock %}"""
 
 RESULTS_HTML = """{% extends 'base.html' %}
-{% block title %}{{ poll.title }} - Toplu Sonuçlar{% endblock %}
+{% block title %}{{ poll.title }} - Toplu Sonuçlar ve Özet İstatistikler{% endblock %}
 {% block content %}
 <div style="background:#003D7A; color:white; padding:1rem 1.5rem; border-radius:12px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
   <div><strong>Yetkili KTSD Oturumu:</strong> {{ staff_email }}</div>
   <div style="display:flex; gap:0.5rem;">
-    <a href="{{ url_for('export_csv', slug=poll.slug) }}" class="btn-primary" style="background:#10B981;"><i class="fas fa-file-excel"></i> Excel / CSV İndir</a>
+    <a href="{{ url_for('export_csv', slug=poll.slug) }}" class="btn-primary" style="background:#1e8e3e;"><i class="fas fa-file-excel"></i> Excel / CSV İndir</a>
     <form action="{{ url_for('staff_logout', slug=poll.slug) }}" method="POST"><button type="submit" class="btn-outline" style="color:white; border-color:white;">Çıkış Yap</button></form>
   </div>
 </div>
-<div class="card">
+
+<!-- KTSD YETKİLİ ÖZET & ANALİZ PANELDİR (SADECE YETKİLİ GÖREBİLİR) -->
+<div class="card" style="background:linear-gradient(135deg, #FFFFFF 0%, #F0F4F9 100%); border-top: 5px solid var(--ktsd-blue);">
   <div class="card-header">
-    <h2>{{ poll.title }} — Toplu Sonuçlar</h2>
-    <a href="{{ url_for('view_poll', slug=poll.slug) }}" target="_blank" class="btn-outline">Üye Sayfasını Gör</a>
+    <h2><i class="fas fa-chart-pie" style="color:var(--ktsd-blue);"></i> KTSD Yetkili Özet & Analiz Raporu</h2>
+    <span style="font-size:0.82rem; background:#E8F0FE; color:#1A73E8; padding:0.3rem 0.75rem; border-radius:50px; font-weight:700;">GİZLİ & KİŞİYE ÖZEL</span>
   </div>
-  <p>Toplam Katılımcı Sayısı: {{ poll.votes|length }} Üye | Yetkili Mailler: {{ authorized_list|join(', ') }}</p>
+
+  <!-- HIGHLIGHT WINNING BEST DATE BOX -->
+  {% if best_option_id %}
+    {% set best_opt = poll.options|selectattr('id', 'equalto', best_option_id)|first %}
+    {% if best_opt %}
+      <div class="best-date-box">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="font-size:2.5rem; color:#34A853;"><i class="fas fa-trophy"></i></div>
+          <div>
+            <div style="font-size:0.82rem; font-weight:700; color:#137333; text-transform:uppercase;">🏆 EN ÇOK KATILIM SAĞLANAN EN UYGUN GÜN</div>
+            <div style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:800; color:#065F46; margin-top:0.2rem;">
+              {{ best_opt.date_val }} — Saat: {{ best_opt.time_val }}
+            </div>
+          </div>
+        </div>
+        <div>
+          <span style="background:#137333; color:white; padding:0.5rem 1.25rem; border-radius:50px; font-weight:800; font-size:0.95rem;">
+            <i class="fas fa-users"></i> {{ stats[best_opt.id]['yes'] }} ÜYE UYGUN
+          </span>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <!-- STAT CARDS GRID -->
+  <div class="stat-cards-grid">
+    <div class="stat-card">
+      <div class="stat-card-title"><i class="fas fa-users"></i> Toplam İşaretleyen Üye</div>
+      <div class="stat-card-val">{{ poll.votes|length }}</div>
+      <div class="stat-card-sub">Oy kullanan üye sayısı</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-title"><i class="fas fa-check-circle" style="color:#137333;"></i> Toplam Uygun (✓)</div>
+      <div class="stat-card-val" style="color:#137333;">{{ total_yes_count }}</div>
+      <div class="stat-card-sub">Toplam yeşil tik sayısı</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-title"><i class="fas fa-question-circle" style="color:#B06000;"></i> Toplam Belirsiz (?)</div>
+      <div class="stat-card-val" style="color:#B06000;">{{ total_maybe_count }}</div>
+      <div class="stat-card-sub">Toplam sarı soru işareti</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-title"><i class="fas fa-times-circle" style="color:#5F6368;"></i> Toplam Uygun Değil (✗)</div>
+      <div class="stat-card-val" style="color:#5F6368;">{{ total_no_count }}</div>
+      <div class="stat-card-sub">Toplam çarpı işaretlemesi</div>
+    </div>
+  </div>
+
+  <!-- TABLE OF MEMBERS WHO VOTED (KİMLER İŞARETLEDİ?) -->
+  <div style="margin-top:1.5rem;">
+    <h4 style="color:var(--ktsd-blue-dark); margin-bottom:0.75rem;"><i class="fas fa-list-ol"></i> Oy Kullanan Üyelerin Listesi (Kimler İşaretledi?)</h4>
+    {% if poll.votes %}
+      <div style="overflow-x:auto; border:1px solid #DADCE0; border-radius:8px;">
+        <table class="matrix-table">
+          <thead>
+            <tr style="background:#F8F9FA;">
+              <th style="text-align:left;">Katılımcı Üye Adı</th>
+              <th style="text-align:left;">Kurum / Firma</th>
+              <th style="text-align:left;">E-posta</th>
+              <th>İşaretleme Tarihi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in poll.votes %}
+              <tr>
+                <td style="text-align:left; font-weight:700; color:var(--ktsd-blue-dark);">{{ v.member_name }}</td>
+                <td style="text-align:left; color:#5F6368;">{{ v.member_company or '-' }}</td>
+                <td style="text-align:left; color:#1A73E8;">{{ v.member_email or '-' }}</td>
+                <td>{{ v.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color:#70757A; font-size:0.88rem;">Henüz katılım tercihi yapan üye bulunmuyor.</p>
+    {% endif %}
+  </div>
 </div>
+
+<!-- DOODLE STYLE FULL PARTICIPANTS RESULTS MATRIX -->
 <div class="card">
-  <h3 style="color:var(--ktsd-blue-dark); margin-bottom:1rem;"><i class="fas fa-table"></i> Üye Katılım Durum Matrisi</h3>
-  <div style="overflow-x:auto;">
-    <table class="matrix-table">
+  <h3 style="color:var(--ktsd-blue-dark); margin-bottom:1rem;"><i class="fas fa-poll"></i> Katılımcı Detaylı Oy Matrisi</h3>
+  <div class="doodle-table-wrapper">
+    <table class="doodle-table">
       <thead>
         <tr>
-          <th style="text-align:left;">Katılımcı Üye / Firma</th>
+          <th class="doodle-header-participant">Katılımcı Üye / Firma</th>
           {% for opt in poll.options %}
-            <th>{{ opt.date_val }}<br><small>{{ opt.time_val }}</small></th>
+            {% set s = stats[opt.id] %}
+            <th class="doodle-header-cell">
+              <div class="doodle-date-card">
+                <div class="doodle-star">⭐</div>
+                <div class="doodle-date-num">{{ opt.date_val.split()[0] if opt.date_val else '' }}</div>
+                <div class="doodle-date-day">{{ opt.date_val.split()[1] if opt.date_val.split()|length > 1 else '' }} {{ opt.date_val.split()[-1] if opt.date_val.split()|length > 2 else '' }}</div>
+                <div class="doodle-time-text">{{ opt.time_val }}</div>
+                <div class="doodle-voters-count"><i class="fas fa-users"></i> {{ s['yes'] }} Uygun</div>
+              </div>
+            </th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
-        {% for vote in poll.votes %}
-          <tr>
-            <td style="text-align:left;"><strong>{{ vote.member_name }}</strong><br><small>{{ vote.member_company or '' }}</small></td>
-            {% for opt in poll.options %}
-              {% set st = vote_matrix[vote.id][opt.id] %}
-              <td>
-                {% if st == 'yes' %}<span class="badge-status badge-yes">✓</span>
-                {% elif st == 'maybe' %}<span class="badge-status badge-maybe">?</span>
-                {% else %}<span class="badge-status badge-no">✗</span>{% endif %}
+        {% if poll.votes %}
+          {% for vote in poll.votes %}
+            <tr>
+              <td class="doodle-row-participant">
+                <div class="avatar-circle">{{ vote.member_name[:2] }}</div>
+                <div class="participant-info">
+                  <div class="participant-name">{{ vote.member_name }}</div>
+                  <div class="participant-sub">{{ vote.member_company or '' }}</div>
+                </div>
               </td>
-            {% endfor %}
+              {% for opt in poll.options %}
+                {% set st = vote_matrix[vote.id][opt.id] %}
+                <td class="doodle-cell">
+                  {% if st == 'yes' %}<span class="pill-badge pill-yes" title="Uygun">✓</span>
+                  {% elif st == 'maybe' %}<span class="pill-badge pill-maybe" title="Olabilir">?</span>
+                  {% else %}<span class="pill-badge pill-no" title="Uygun Değil">✗</span>{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="{{ poll.options|length + 1 }}" style="padding:2rem; text-align:center; color:#70757A;">Henüz katılım tercihi yapan üye bulunmuyor.</td>
           </tr>
-        {% endfor %}
-        <tr style="background:#F1F5F9; font-weight:700;">
-          <td style="text-align:left;">TOPLAM ÖZETİ</td>
+        {% endif %}
+
+        <!-- TOTALS ROW -->
+        <tr style="background:#F1F3F4; font-weight:700;">
+          <td class="doodle-row-participant" style="background:#E8EAED;">
+            <div class="avatar-circle" style="background:var(--ktsd-blue-dark);">ÖZET</div>
+            <div class="participant-info">
+              <div class="participant-name">TOPLAM SAYILAR</div>
+              <div class="participant-sub">Genel Özet</div>
+            </div>
+          </td>
           {% for opt in poll.options %}
             {% set s = stats[opt.id] %}
-            <td>
-              <div style="font-size:0.8rem;">
-                <div style="color:#065F46;">✓ {{ s['yes'] }} Uygun</div>
-                <div style="color:#92400E;">? {{ s['maybe'] }} Olabilir</div>
-                <div style="color:#991B1B;">✗ {{ s['no'] }} Değil</div>
+            <td class="doodle-cell" style="background:#F8F9FA;">
+              <div style="font-size:0.8rem; line-height:1.4;">
+                <div style="color:#137333; font-weight:700;">✓ {{ s['yes'] }} Uygun</div>
+                <div style="color:#B06000;">? {{ s['maybe'] }} Olabilir</div>
+                <div style="color:#70757A;">✗ {{ s['no'] }} Değil</div>
               </div>
             </td>
           {% endfor %}
@@ -677,6 +823,10 @@ def view_results(slug):
         return render_template('results_auth.html', poll=poll, authorized_count=len(authorized_list))
 
     stats = {}
+    total_yes_count = 0
+    total_maybe_count = 0
+    total_no_count = 0
+
     for opt in poll.options:
         stats[opt.id] = {'yes': 0, 'maybe': 0, 'no': 0, 'score': 0}
 
@@ -684,6 +834,12 @@ def view_results(slug):
         for detail in vote.details:
             if detail.option_id in stats:
                 stats[detail.option_id][detail.status] += 1
+                if detail.status == 'yes':
+                    total_yes_count += 1
+                elif detail.status == 'maybe':
+                    total_maybe_count += 1
+                elif detail.status == 'no':
+                    total_no_count += 1
 
     best_option_id = None
     max_score = -1
@@ -707,6 +863,9 @@ def view_results(slug):
     return render_template('results.html',
                            poll=poll,
                            stats=stats,
+                           total_yes_count=total_yes_count,
+                           total_maybe_count=total_maybe_count,
+                           total_no_count=total_no_count,
                            best_option_id=best_option_id,
                            vote_matrix=vote_matrix,
                            final_option=final_option,
