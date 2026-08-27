@@ -3,6 +3,10 @@ import uuid
 import csv
 import io
 import tempfile
+import smtplib
+import threading
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, session
 from flask_sqlalchemy import SQLAlchemy
@@ -26,6 +30,38 @@ DEFAULT_STAFF_EMAILS = [
     "ilayda.kaya@ktsd.org.tr",
     "turkan.dundar@ktsd.org.tr"
 ]
+
+# SMTP Configuration (Set via environment variables or default settings)
+SMTP_SERVER = os.environ.get('SMTP_SERVER', 'mail.ktsd.org.tr')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+SMTP_USER = os.environ.get('SMTP_USER', 'toplanti@ktsd.org.tr')
+SMTP_PASS = os.environ.get('SMTP_PASS', '')
+
+def send_async_email(subject, html_body, recipients):
+    """ Sends email notifications in a background thread so web page response is instantaneous """
+    if not recipients or not SMTP_PASS:
+        print(f"[Email Notification Logged] Subject: {subject} -> Recipients: {recipients}")
+        return
+
+    def _send():
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = f"KTSD Toplantı Portalı <{SMTP_USER}>"
+            msg['To'] = ", ".join(recipients)
+
+            msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10)
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_USER, recipients, msg.as_string())
+            server.quit()
+            print(f"[Email Sent Successfully] to {recipients}")
+        except Exception as e:
+            print(f"[Email Notification Exception] {e}")
+
+    threading.Thread(target=_send).start()
 
 # Database Models
 class Poll(db.Model):
@@ -87,7 +123,7 @@ def init_db():
 
 init_db()
 
-# EMBEDDED HTML TEMPLATES (Doodle Style + Authorized Analytics Dashboard)
+# EMBEDDED HTML TEMPLATES (Doodle Style + Authorized Analytics Dashboard + Email Alerts)
 BASE_HTML = """<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -133,7 +169,6 @@ BASE_HTML = """<!DOCTYPE html>
     .btn-outline { border: 1.5px solid var(--ktsd-blue-dark); color: var(--ktsd-blue-dark); padding: 0.5rem 1rem; border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; font-size: 0.88rem; background: transparent; cursor: pointer; }
     .share-banner { background: #003D7A; color: white; padding: 1.25rem 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
     
-    /* ANALYTICS STAT CARDS */
     .stat-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
     .stat-card { background: #F8F9FA; border: 1px solid #DADCE0; border-radius: 12px; padding: 1.25rem; text-align: center; }
     .stat-card-title { font-size: 0.82rem; font-weight: 700; color: #5F6368; text-transform: uppercase; margin-bottom: 0.3rem; }
@@ -142,7 +177,6 @@ BASE_HTML = """<!DOCTYPE html>
 
     .best-date-box { background: linear-gradient(135deg, #E6F4EA 0%, #CEEAD6 100%); border: 2px solid #34A853; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     
-    /* DOODLE STYLE MATRIX TABLE & CARDS */
     .doodle-table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #DADCE0; border-radius: 12px; background: white; margin-top: 1rem; }
     .doodle-table { width: 100%; border-collapse: separate; border-spacing: 0; }
     .doodle-header-cell { background: #F8F9FA; padding: 1rem 0.75rem; text-align: center; border-bottom: 2px solid #DADCE0; border-right: 1px solid #E8EAED; min-width: 140px; }
@@ -174,6 +208,10 @@ BASE_HTML = """<!DOCTYPE html>
     .v-btn.v-yes:has(input:checked), .v-btn.v-yes.active { background: #137333; color: white; border-color: #137333; }
     .v-btn.v-maybe:has(input:checked), .v-btn.v-maybe.active { background: #F59E0B; color: white; border-color: #F59E0B; }
     .v-btn.v-no:has(input:checked), .v-btn.v-no.active { background: #5F6368; color: white; border-color: #5F6368; }
+
+    .matrix-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem; }
+    .matrix-table th, .matrix-table td { padding: 0.85rem; border: 1px solid #E2E8F0; }
+    .matrix-table th { background: #F8FAFC; color: var(--ktsd-blue-dark); font-weight: 600; }
 
     .ktsd-footer { background: var(--ktsd-blue-dark); color: #93C5FD; padding: 1.5rem; text-align: center; font-size: 0.85rem; margin-top: auto; }
     .alert { padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.92rem; background: #E6F4EA; color: #137333; border: 1px solid #CEEAD6; }
@@ -292,7 +330,7 @@ INDEX_HTML = """{% extends 'base.html' %}
 {% block content %}
 <div class="hero-section">
   <h2><i class="fas fa-calendar-alt"></i> Kurumsal Toplantı Tarihi Planlayıcı</h2>
-  <p>Doodle stili takvim kartları ile üyelere toplantı anketi bağlantısı gönderin. Üyeler sadece tarih seçimi yapabilir; toplu sonuçlar yetkili KTSD çalışanlarına özeldir.</p>
+  <p>Doodle stili takvim kartları ile üyelere toplantı anketi bağlantısı gönderin. Üyeler sadece tarih seçimi yapabilir; toplu sonuçlar ve anlık e-posta bildirimleri yetkili KTSD çalışanlarına özeldir.</p>
 </div>
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
   <div class="card">
@@ -319,9 +357,9 @@ INDEX_HTML = """{% extends 'base.html' %}
         </div>
       </div>
       <div class="form-group" style="background:#F0F9FF; padding:1rem; border-radius:8px; border:1px solid #BAE6FD;">
-        <label class="form-label" style="color:#0369A1;"><i class="fas fa-user-shield"></i> Sonuçları Görmeye Yetkili KTSD E-posta Adresleri</label>
+        <label class="form-label" style="color:#0369A1;"><i class="fas fa-envelope-open-text"></i> Anlık E-posta Bildirimi Gönderilecek KTSD Yetkilileri</label>
         <input type="text" name="authorized_emails" class="form-control" value="{{ default_emails_str }}">
-        <small style="color:#0284C7; display:block; margin-top:0.3rem;">Yetkili KTSD Mailleri: dicle.eren@ktsd.org.tr, ilayda.huban@ktsd.org.tr, ilayda.kaya@ktsd.org.tr, turkan.dundar@ktsd.org.tr</small>
+        <small style="color:#0284C7; display:block; margin-top:0.3rem;"><i class="fas fa-bell"></i> Her yeni üye işaretlemesinde bu 4 yetkili mail adresine anlık bildirim e-postası iletilecektir.</small>
       </div>
       <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1.25rem; border-radius:8px; margin-bottom:1.5rem;">
         <h4 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-magic"></i> Otomatik Saat Üretici (09:00 - 17:00)</h4>
@@ -402,7 +440,7 @@ POLL_HTML = """{% extends 'base.html' %}
   <div style="background:#ECFDF5; border:2px solid #A7F3D0; padding:1.5rem; border-radius:12px; text-align:center; margin-bottom:2rem;">
     <i class="fas fa-check-circle" style="font-size:2.5rem; color:#059669;"></i>
     <h3 style="color:#065F46; margin-top:0.5rem;">Katılım Tercihleriniz Kaydedilmiştir!</h3>
-    <p style="color:#047857;">Toplantı tarihi kesinleştiğinde bilgilendirme yapılacaktır. Teşekkür ederiz.</p>
+    <p style="color:#047857;">Toplantı tarihi kesinleştiğinde bilgilendirme yapılacaktır. Katılımınız için teşekkür ederiz.</p>
   </div>
 {% endif %}
 
@@ -418,7 +456,6 @@ POLL_HTML = """{% extends 'base.html' %}
         <div><label class="form-label">E-posta Adresiniz</label><input type="email" name="member_email" class="form-control" placeholder="Örn: mehmet@abckimya.com"></div>
       </div>
 
-      <!-- HORIZONTAL CALENDAR MATRIX TABLE -->
       <div class="doodle-table-wrapper">
         <table class="doodle-table">
           <thead>
@@ -500,14 +537,12 @@ RESULTS_HTML = """{% extends 'base.html' %}
   </div>
 </div>
 
-<!-- KTSD YETKİLİ ÖZET & ANALİZ PANELDİR (SADECE YETKİLİ GÖREBİLİR) -->
 <div class="card" style="background:linear-gradient(135deg, #FFFFFF 0%, #F0F4F9 100%); border-top: 5px solid var(--ktsd-blue);">
   <div class="card-header">
     <h2><i class="fas fa-chart-pie" style="color:var(--ktsd-blue);"></i> KTSD Yetkili Özet & Analiz Raporu</h2>
     <span style="font-size:0.82rem; background:#E8F0FE; color:#1A73E8; padding:0.3rem 0.75rem; border-radius:50px; font-weight:700;">GİZLİ & KİŞİYE ÖZEL</span>
   </div>
 
-  <!-- HIGHLIGHT WINNING BEST DATE BOX -->
   {% if best_option_id %}
     {% set best_opt = poll.options|selectattr('id', 'equalto', best_option_id)|first %}
     {% if best_opt %}
@@ -530,7 +565,6 @@ RESULTS_HTML = """{% extends 'base.html' %}
     {% endif %}
   {% endif %}
 
-  <!-- STAT CARDS GRID -->
   <div class="stat-cards-grid">
     <div class="stat-card">
       <div class="stat-card-title"><i class="fas fa-users"></i> Toplam İşaretleyen Üye</div>
@@ -554,7 +588,6 @@ RESULTS_HTML = """{% extends 'base.html' %}
     </div>
   </div>
 
-  <!-- TABLE OF MEMBERS WHO VOTED (KİMLER İŞARETLEDİ?) -->
   <div style="margin-top:1.5rem;">
     <h4 style="color:var(--ktsd-blue-dark); margin-bottom:0.75rem;"><i class="fas fa-list-ol"></i> Oy Kullanan Üyelerin Listesi (Kimler İşaretledi?)</h4>
     {% if poll.votes %}
@@ -586,7 +619,6 @@ RESULTS_HTML = """{% extends 'base.html' %}
   </div>
 </div>
 
-<!-- DOODLE STYLE FULL PARTICIPANTS RESULTS MATRIX -->
 <div class="card">
   <h3 style="color:var(--ktsd-blue-dark); margin-bottom:1rem;"><i class="fas fa-poll"></i> Katılımcı Detaylı Oy Matrisi</h3>
   <div class="doodle-table-wrapper">
@@ -635,7 +667,6 @@ RESULTS_HTML = """{% extends 'base.html' %}
           </tr>
         {% endif %}
 
-        <!-- TOTALS ROW -->
         <tr style="background:#F1F3F4; font-weight:700;">
           <td class="doodle-row-participant" style="background:#E8EAED;">
             <div class="avatar-circle" style="background:var(--ktsd-blue-dark);">ÖZET</div>
@@ -792,6 +823,7 @@ def submit_vote(slug):
     db.session.add(vote)
     db.session.flush()
 
+    vote_summary_lines = []
     for opt in poll.options:
         status = request.form.get(f'opt_{opt.id}', 'no')
         if status not in ['yes', 'maybe', 'no']:
@@ -802,9 +834,36 @@ def submit_vote(slug):
             status=status
         )
         db.session.add(detail)
+        
+        st_label = "✓ Uygun" if status == 'yes' else ("? Olabilir" if status == 'maybe' else "✗ Değil")
+        vote_summary_lines.append(f"<li><b>{opt.date_val} ({opt.time_val}):</b> {st_label}</li>")
 
     db.session.commit()
-    flash(f"Teşekkürler {member_name}, katılım tercihleriniz başarıyla alındı ve kaydedildi!", "success")
+
+    # Trigger Async Email Notification to Authorized Staff
+    recipients = poll.get_authorized_email_list()
+    subject = f"[KTSD Toplantı Portalı] Yeni Katılım İşaretlemesi: {member_name} - {poll.title}"
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f7fa;">
+      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; padding: 25px; border-top: 5px solid #005BB5;">
+        <h2 style="color: #003D7A; margin-top: 0;">Yeni Katılım İşaretlemesi Alındı</h2>
+        <p><b>Toplantı Konusu:</b> {poll.title}</p>
+        <p><b>İşaretleyen Üye:</b> {member_name} ({member_company or 'Kurum Belirtilmedi'})</p>
+        <p><b>E-posta:</b> {member_email or 'Belirtilmedi'}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <h4 style="color: #005BB5;">Üyenin Tarih Tercihleri:</h4>
+        <ul style="line-height: 1.6; color: #333;">
+          {"".join(vote_summary_lines)}
+        </ul>
+        <div style="margin-top: 25px; text-align: center;">
+          <a href="{request.host_url}poll/{poll.slug}/results" style="background: #005BB5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Toplu Sonuçları Görüntüle</a>
+        </div>
+      </div>
+    </div>
+    """
+    send_async_email(subject, html_body, recipients)
+
+    flash(f"Teşekkürler {member_name}, katılım tercihleriniz başarıyla alındı ve yetkili KTSD ekibine e-posta bildirimi iletildi!", "success")
     return redirect(url_for('view_poll', slug=slug, voted=1))
 
 @app.route('/poll/<slug>/results')
