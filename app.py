@@ -25,20 +25,20 @@ db = SQLAlchemy(app)
 
 # Official KTSD Staff Emails
 DEFAULT_STAFF_EMAILS = [
-    "dicle.eren@ktsd.org.tr",
+    "turkan.dundar@ktsd.org.tr",
     "ilayda.huban@ktsd.org.tr",
-    "ilayda.kaya@ktsd.org.tr",
-    "turkan.dundar@ktsd.org.tr"
+    "dicle.eren@ktsd.org.tr",
+    "ilayda.kaya@ktsd.org.tr"
 ]
 
-# SMTP Configuration (Set via environment variables or default settings)
+# SMTP Configuration
 SMTP_SERVER = os.environ.get('SMTP_SERVER', 'mail.ktsd.org.tr')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
 SMTP_USER = os.environ.get('SMTP_USER', 'toplanti@ktsd.org.tr')
 SMTP_PASS = os.environ.get('SMTP_PASS', '')
 
 def send_async_email(subject, html_body, recipients):
-    """ Sends email notifications in a background thread so web page response is instantaneous """
+    """ Sends email notifications in a background thread """
     if not recipients or not SMTP_PASS:
         print(f"[Email Notification Logged] Subject: {subject} -> Recipients: {recipients}")
         return
@@ -70,7 +70,7 @@ class Poll(db.Model):
     slug = db.Column(db.String(32), unique=True, nullable=False, index=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    organizer_name = db.Column(db.String(120), nullable=False)
+    organizer_name = db.Column(db.String(120), nullable=True, default='KTSD Genel Sekreterliği')
     organizer_company = db.Column(db.String(150), nullable=True)
     authorized_emails = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -123,7 +123,7 @@ def init_db():
 
 init_db()
 
-# EMBEDDED HTML TEMPLATES (Doodle Style + Authorized Analytics Dashboard + Email Alerts)
+# EMBEDDED HTML TEMPLATES
 BASE_HTML = """<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -330,7 +330,7 @@ INDEX_HTML = """{% extends 'base.html' %}
 {% block content %}
 <div class="hero-section">
   <h2><i class="fas fa-calendar-alt"></i> Kurumsal Toplantı Tarihi Planlayıcı</h2>
-  <p>Doodle stili takvim kartları ile üyelere toplantı anketi bağlantısı gönderin. Üyeler sadece tarih seçimi yapabilir; toplu sonuçlar ve anlık e-posta bildirimleri yetkili KTSD çalışanlarına özeldir.</p>
+  <p>Takvim kartları ile üyelere toplantı anketi bağlantısı gönderin. Üyeler sadece tarih seçimi yapabilir; toplu sonuçlar ve anlık e-posta bildirimleri seçtiğiniz yetkili KTSD çalışanına iletilir.</p>
 </div>
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
   <div class="card">
@@ -346,21 +346,20 @@ INDEX_HTML = """{% extends 'base.html' %}
         <label class="form-label">Toplantı Açıklaması / Gündemi</label>
         <textarea name="description" class="form-control" placeholder="Gündem ve konum notları..."></textarea>
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-          <label class="form-label">Düzenleyen Ad Soyad *</label>
-          <input type="text" name="organizer_name" class="form-control" placeholder="Örn: Ahmet Yılmaz" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Kurum / Görev</label>
-          <input type="text" name="organizer_company" class="form-control" placeholder="Örn: KTSD Genel Sekreterliği">
-        </div>
-      </div>
+
+      <!-- YETKİLİ KİŞİ DROPDOWN SELECT (OK İLE SEÇİM) -->
       <div class="form-group" style="background:#F0F9FF; padding:1rem; border-radius:8px; border:1px solid #BAE6FD;">
-        <label class="form-label" style="color:#0369A1;"><i class="fas fa-envelope-open-text"></i> Anlık E-posta Bildirimi Gönderilecek KTSD Yetkilileri</label>
-        <input type="text" name="authorized_emails" class="form-control" value="{{ default_emails_str }}">
-        <small style="color:#0284C7; display:block; margin-top:0.3rem;"><i class="fas fa-bell"></i> Her yeni üye işaretlemesinde bu 4 yetkili mail adresine anlık bildirim e-postası iletilecektir.</small>
+        <label class="form-label" style="color:#0369A1;"><i class="fas fa-user-shield"></i> Anlık Bildirim Gönderilecek KTSD Yetkilisi *</label>
+        <select name="authorized_emails" class="form-control" style="font-weight:600; cursor:pointer;">
+          <option value="turkan.dundar@ktsd.org.tr" selected>1. Türkan Dündar (turkan.dundar@ktsd.org.tr)</option>
+          <option value="ilayda.huban@ktsd.org.tr">2. İlayda Hüban (ilayda.huban@ktsd.org.tr)</option>
+          <option value="dicle.eren@ktsd.org.tr">3. Dicle Eren (dicle.eren@ktsd.org.tr)</option>
+          <option value="ilayda.kaya@ktsd.org.tr">4. İlayda Kaya (ilayda.kaya@ktsd.org.tr)</option>
+          <option value="turkan.dundar@ktsd.org.tr, ilayda.huban@ktsd.org.tr, dicle.eren@ktsd.org.tr, ilayda.kaya@ktsd.org.tr">Tüm KTSD Ekibi (4 Yetkili Mail)</option>
+        </select>
+        <small style="color:#0284C7; display:block; margin-top:0.3rem;"><i class="fas fa-bell"></i> Seçilen KTSD yetkilisine her yeni üye işaretlemesinde anlık e-posta bildirimi iletilir.</small>
       </div>
+
       <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1.25rem; border-radius:8px; margin-bottom:1.5rem;">
         <h4 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-magic"></i> Otomatik Saat Üretici (09:00 - 17:00)</h4>
         <div style="display:grid; grid-template-columns: 1fr 1.2fr 1.5fr; gap:1rem; align-items:flex-end;">
@@ -402,7 +401,6 @@ INDEX_HTML = """{% extends 'base.html' %}
         {% for p in recent_polls %}
           <div style="padding:0.75rem; border:1px solid #E2E8F0; border-radius:6px; margin-bottom:0.5rem; background:#F8FAFC;">
             <a href="{{ url_for('view_poll', slug=p.slug) }}" style="text-decoration:none; font-weight:600; color:var(--ktsd-blue-dark);">{{ p.title }}</a>
-            <div style="font-size:0.78rem; color:#64748B; margin-top:0.2rem;">Düzenleyen: {{ p.organizer_name }}</div>
           </div>
         {% endfor %}
       {% else %}
@@ -433,7 +431,7 @@ POLL_HTML = """{% extends 'base.html' %}
     <a href="{{ url_for('view_results', slug=poll.slug) }}" class="btn-outline"><i class="fas fa-user-shield"></i> KTSD Yetkili Girişi</a>
   </div>
   {% if poll.description %}<p style="background:#F8FAFC; padding:0.85rem; border-left:4px solid var(--ktsd-blue); margin-bottom:1rem;"><strong>Toplantı Notu:</strong> {{ poll.description }}</p>{% endif %}
-  <p style="font-size:0.9rem; color:#64748B;">Düzenleyen: {{ poll.organizer_name }} | Gizlilik: Üye Oylaması (Toplu sonuçlar gizlidir)</p>
+  <p style="font-size:0.85rem; color:#64748B;">Gizlilik: Üye Oylaması (Toplu sonuçlar KTSD yetkililerine özeldir)</p>
 </div>
 
 {% if voted_flag %}
@@ -446,7 +444,7 @@ POLL_HTML = """{% extends 'base.html' %}
 
 {% if poll.status == 'active' %}
   <div class="card">
-    <h3 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-calendar-alt" style="color:var(--ktsd-blue);"></i> Doodle Stili Takvim Oylaması</h3>
+    <h3 style="color:var(--ktsd-blue-dark); margin-bottom:0.5rem;"><i class="fas fa-calendar-check" style="color:var(--ktsd-blue);"></i> Toplantı Katılım Tercihleri</h3>
     <p style="font-size:0.88rem; color:#5F6368; margin-bottom:1.5rem;">Lütfen adınızı girerek aşağıdaki tarih sütunlarında durumunuzu (✓ Uygun, ? Olabilir, ✗ Değil) seçin.</p>
     
     <form action="{{ url_for('submit_vote', slug=poll.slug) }}" method="POST">
@@ -515,11 +513,11 @@ RESULTS_AUTH_HTML = """{% extends 'base.html' %}
 {% block content %}
 <div style="max-width:520px; margin:3rem auto;" class="card">
   <h2 style="color:var(--ktsd-blue-dark); text-align:center; margin-bottom:1rem;"><i class="fas fa-user-shield"></i> KTSD Yetkili Girişi</h2>
-  <p style="font-size:0.88rem; color:#5F6368; text-align:center; margin-bottom:1.5rem;">Bu anketin toplu sonuçları sadece yetkili KTSD e-posta adresleri (dicle.eren, ilayda.huban, ilayda.kaya, turkan.dundar@ktsd.org.tr) tarafından görüntülenebilir.</p>
+  <p style="font-size:0.88rem; color:#5F6368; text-align:center; margin-bottom:1.5rem;">Bu anketin toplu sonuçları sadece yetkili KTSD e-posta adresleri (turkan.dundar, ilayda.huban, dicle.eren, ilayda.kaya@ktsd.org.tr) tarafından görüntülenebilir.</p>
   <form action="{{ url_for('staff_auth', slug=poll.slug) }}" method="POST">
     <div class="form-group">
       <label class="form-label">Yetkili KTSD E-posta Adresiniz</label>
-      <input type="email" name="staff_email" class="form-control" placeholder="Örn: dicle.eren@ktsd.org.tr" required>
+      <input type="email" name="staff_email" class="form-control" placeholder="Örn: turkan.dundar@ktsd.org.tr" required>
     </div>
     <button type="submit" class="btn-primary" style="width:100%; font-size:1rem; padding:0.85rem;"><i class="fas fa-key"></i> Giriş Yap ve Sonuçları Aç</button>
   </form>
@@ -730,15 +728,13 @@ def create_poll():
     init_db()
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
-    organizer_name = request.form.get('organizer_name', '').strip()
-    organizer_company = request.form.get('organizer_company', '').strip()
     auth_emails = request.form.get('authorized_emails', '').strip()
     
     dates = request.form.getlist('option_date[]')
     times = request.form.getlist('option_time[]')
 
-    if not title or not organizer_name:
-        flash("Lütfen toplantı başlığını ve düzenleyen adını giriniz.", "danger")
+    if not title:
+        flash("Lütfen toplantı başlığını giriniz.", "danger")
         return redirect(url_for('index'))
 
     valid_options = []
@@ -755,15 +751,15 @@ def create_poll():
         return redirect(url_for('index'))
 
     if not auth_emails:
-        auth_emails = ", ".join(DEFAULT_STAFF_EMAILS)
+        auth_emails = "turkan.dundar@ktsd.org.tr"
 
     slug = uuid.uuid4().hex[:10]
     poll = Poll(
         slug=slug,
         title=title,
         description=description,
-        organizer_name=organizer_name,
-        organizer_company=organizer_company,
+        organizer_name='KTSD Genel Sekreterliği',
+        organizer_company='KTSD',
         authorized_emails=auth_emails
     )
     db.session.add(poll)
