@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ poll.title }} - KTSD Toplu Sonuçlar Dashbord{% endblock %}
+
+{% block content %}
+
+<!-- Staff Authentication Bar -->
+<div style="background: linear-gradient(135deg, #0F2C59 0%, #1E3A8A 100%); color: white; padding: 1rem 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: var(--shadow-md);">
+  <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <div style="background: var(--ktsd-teal); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+      <i class="fas fa-user-shield"></i>
+    </div>
+    <div>
+      <div style="font-weight: 700; font-size: 0.98rem;">Yetkili KTSD Oturumu: {{ staff_email }}</div>
+      <div style="font-size: 0.78rem; color: #93C5FD;">Toplu sonuçlar ve yönetici yetkileri kilitli alanındasınız.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.75rem; align-items: center;">
+    <a href="{{ url_for('export_csv', slug=poll.slug) }}" class="btn-header" style="background: var(--ktsd-teal); border: none;">
+      <i class="fas fa-file-excel"></i> Excel / CSV İndir
+    </a>
+    <form action="{{ url_for('staff_logout', slug=poll.slug) }}" method="POST" style="margin:0;">
+      <button type="submit" class="btn-header" style="background: rgba(255,255,255,0.15);">
+        <i class="fas fa-sign-out-alt"></i> Çıkış Yap
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Poll Info Header Card -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <span class="badge-status" style="width: auto; height: auto; border-radius: 4px; padding: 0.25rem 0.6rem; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.5rem; display: inline-block; {% if poll.status == 'finalized' %}background: #D1FAE5; color: #065F46;{% else %}background: #E0F2FE; color: #0369A1;{% endif %}">
+        {% if poll.status == 'finalized' %}<i class="fas fa-check-circle"></i> Tarih Kesinleşti{% else %}<i class="fas fa-poll"></i> Oylama Devam Ediyor{% endif %}
+      </span>
+      <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: var(--ktsd-navy); line-height: 1.3;">
+        {{ poll.title }} — Toplu Sonuçlar
+      </h2>
+    </div>
+
+    <div>
+      <a href="{{ url_for('view_poll', slug=poll.slug) }}" target="_blank" class="btn-outline">
+        <i class="fas fa-external-link-alt"></i> Üye Oylama Sayfasını Gör
+      </a>
+    </div>
+  </div>
+
+  {% if poll.description %}
+    <div style="background: #F8FAFC; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border-left: 4px solid var(--ktsd-teal); margin-bottom: 1.5rem; color: #334155; font-size: 0.95rem;">
+      <strong><i class="fas fa-info-circle" style="color: var(--ktsd-teal);"></i> Toplantı Notu:</strong> {{ poll.description }}
+    </div>
+  {% endif %}
+
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.9rem; color: #64748B;">
+    <div><i class="fas fa-user-tier" style="color: var(--ktsd-navy);"></i> <strong>Düzenleyen:</strong> {{ poll.organizer_name }} {% if poll.organizer_company %}({{ poll.organizer_company }}){% endif %}</div>
+    <div><i class="fas fa-users" style="color: var(--ktsd-navy);"></i> <strong>Oy Kullanan Üye Sayısı:</strong> {{ poll.votes|length }} Katılımcı</div>
+    <div><i class="fas fa-envelope-open-text" style="color: var(--ktsd-navy);"></i> <strong>Yetkili Mail Adresleri:</strong> {{ authorized_list|join(', ') }}</div>
+  </div>
+</div>
+
+<!-- Finalized Notice Banner (if finalized) -->
+{% if poll.status == 'finalized' and final_option %}
+  <div class="finalized-banner">
+    <h3><i class="fas fa-check-circle"></i> Toplantı Tarihi Kesinleşti</h3>
+    <p>Bu toplantı için aşağıdaki tarih ve saat seçilmiştir:</p>
+    <div class="final-date-box">
+      <i class="fas fa-calendar-check" style="color: var(--ktsd-teal);"></i> {{ final_option.date_val }} &bull; {{ final_option.time_val }}
+    </div>
+    <form action="{{ url_for('reopen_poll', slug=poll.slug) }}" method="POST" style="margin-top: 1rem;">
+      <button type="submit" class="btn-outline" style="color: white; border-color: rgba(255,255,255,0.4); font-size: 0.78rem;">
+        <i class="fas fa-undo"></i> Oylamayı Yeniden Aç
+      </button>
+    </form>
+  </div>
+{% endif %}
+
+<!-- Best Option Highlight (if poll active) -->
+{% if poll.status == 'active' and best_option_id %}
+  {% set best_opt = poll.options|selectattr('id', 'equalto', best_option_id)|first %}
+  {% if best_opt %}
+    <div class="best-option-banner">
+      <div class="best-option-title">
+        <i class="fas fa-star" style="font-size: 1.5rem; color: #F59E0B;"></i>
+        <div>
+          <div>En Çok Uygunluk Sağlanan Tarih Alternatifi</div>
+          <div style="font-size: 0.9rem; font-weight: 500; color: #334155; margin-top: 0.2rem;">
+            {{ best_opt.date_val }} — Saat: {{ best_opt.time_val }}
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="best-option-badge">
+          <i class="fas fa-thumbs-up"></i> {{ stats[best_opt.id]['yes'] }} Üye Uygun
+        </span>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+<!-- Katılımcı Durum Matrisi & Isı Haritası (ONLY visible to Staff) -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fas fa-table" style="color: var(--ktsd-teal);"></i> Üye Katılım Durum Matrisi
+    </h3>
+    <div style="font-size: 0.85rem; color: #64748B;">
+      <span style="display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.8rem;"><span class="badge-status badge-yes" style="width: 18px; height: 18px; font-size: 0.6rem;">✓</span> Uygun</span>
+      <span style="display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.8rem;"><span class="badge-status badge-maybe" style="width: 18px; height: 18px; font-size: 0.6rem;">?</span> Olabilir</span>
+      <span style="display: inline-flex; align-items: center; gap: 0.3rem;"><span class="badge-status badge-no" style="width: 18px; height: 18px; font-size: 0.6rem;">✗</span> Uygun Değil</span>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th style="text-align: left; min-width: 220px;">Katılımcı Üye / Firma</th>
+          {% for opt in poll.options %}
+            <th class="option-header {% if opt.id == best_option_id %}is-best{% endif %}">
+              <div class="option-date-title">
+                {% if opt.id == best_option_id %}<i class="fas fa-crown" style="color: #F59E0B;" title="En popüler tarih"></i> {% endif %}
+                {{ opt.date_val }}
+              </div>
+              <div class="option-time-subtitle">{{ opt.time_val }}</div>
+            </th>
+          {% endfor %}
+          <th style="width: 50px;">İşlem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if poll.votes %}
+          {% for vote in poll.votes %}
+            <tr>
+              <td style="text-align: left;">
+                <div style="font-weight: 600; color: var(--ktsd-navy);">{{ vote.member_name }}</div>
+                {% if vote.member_company %}
+                  <div style="font-size: 0.78rem; color: #64748B;">{{ vote.member_company }}</div>
+                {% endif %}
+                {% if vote.member_email %}
+                  <div style="font-size: 0.72rem; color: #0284C7;"><i class="fas fa-envelope"></i> {{ vote.member_email }}</div>
+                {% endif %}
+              </td>
+
+              {% for opt in poll.options %}
+                {% set st = vote_matrix[vote.id][opt.id] %}
+                <td>
+                  {% if st == 'yes' %}
+                    <span class="badge-status badge-yes" title="Uygun">✓</span>
+                  {% elif st == 'maybe' %}
+                    <span class="badge-status badge-maybe" title="Olabilir">?</span>
+                  {% else %}
+                    <span class="badge-status badge-no" title="Uygun Değil">✗</span>
+                  {% endif %}
+                </td>
+              {% endfor %}
+
+              <td>
+                <form action="{{ url_for('delete_vote', slug=poll.slug, vote_id=vote.id) }}" method="POST" onsubmit="return confirm('Bu oy kaydını silmek istediğinize emin misiniz?');">
+                  <button type="submit" style="background: none; border: none; color: #94A3B8; cursor: pointer; padding: 0.3rem;" title="Oyu Sil">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="{{ poll.options|length + 2 }}" style="padding: 2rem; color: #94A3B8;">
+              <i class="fas fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #CBD5E1;"></i>
+              Henüz katılım tercihi belirten üye bulunmuyor.
+            </td>
+          </tr>
+        {% endif %}
+
+        <!-- Summaries Totals Row -->
+        <tr class="row-totals">
+          <td style="text-align: left; font-family: 'Outfit', sans-serif;">
+            <strong>TOPLAM ÖZETİ</strong>
+          </td>
+          {% for opt in poll.options %}
+            {% set s = stats[opt.id] %}
+            <td>
+              <div class="totals-box">
+                <span class="total-count-yes">✓ {{ s['yes'] }} Uygun</span>
+                <span class="total-count-maybe">? {{ s['maybe'] }} Olabilir</span>
+                <span class="total-count-no">✗ {{ s['no'] }} Değil</span>
+              </div>
+              
+              {% if poll.status == 'active' %}
+                <form action="{{ url_for('finalize_poll', slug=poll.slug) }}" method="POST" style="margin-top: 0.6rem;">
+                  <input type="hidden" name="final_option_id" value="{{ opt.id }}">
+                  <button type="submit" class="btn-outline" style="font-size: 0.72rem; padding: 0.25rem 0.5rem; width: 100%; border-color: var(--ktsd-teal); color: var(--ktsd-teal);" onclick="return confirm('Bu tarihi toplantı zamanı olarak kesinleştirmek istiyor musunuz?');">
+                    Tarihi Kesinleştir
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          {% endfor %}
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

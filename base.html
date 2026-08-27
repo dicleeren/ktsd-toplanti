@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}KTSD Toplantı ve Tarih Belirleme Portalı{% endblock %}</title>
+  
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- KTSD Corporate Header -->
+  <header class="ktsd-header">
+    <div class="header-container">
+      <a href="{{ url_for('index') }}" class="ktsd-brand">
+        <img src="{{ url_for('static', filename='images/ktsd_logo.png') }}" alt="KTSD Logo" class="ktsd-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="ktsd-logo-badge" style="display:none; width:48px; height:48px; background:var(--ktsd-blue); color:white; font-family:'Outfit',sans-serif; font-weight:800; font-size:1.2rem; border-radius:12px; align-items:center; justify-content:center;">KTSD</div>
+        <div class="brand-divider"></div>
+        <div class="brand-text">
+          <h1>Toplantı Portalı</h1>
+          <p>Kozmetik ve Temizlik Ürünleri Sanayicileri Derneği</p>
+        </div>
+      </a>
+      <div class="header-actions">
+        <a href="{{ url_for('index') }}" class="btn-header">
+          <i class="fas fa-plus-circle"></i> Yeni Anket Oluştur
+        </a>
+        <a href="https://www.ktsd.org.tr" target="_blank" class="btn-header-outline">
+          <i class="fas fa-globe"></i> ktsd.org.tr
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-wrapper">
+    <!-- Flash Messages -->
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              {% if category == 'success' %}
+                <i class="fas fa-check-circle"></i>
+              {% elif category == 'danger' %}
+                <i class="fas fa-exclamation-circle"></i>
+              {% elif category == 'warning' %}
+                <i class="fas fa-exclamation-triangle"></i>
+              {% else %}
+                <i class="fas fa-info-circle"></i>
+              {% endif %}
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- KTSD Footer -->
+  <footer class="ktsd-footer">
+    <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+      <img src="{{ url_for('static', filename='images/ktsd_logo.png') }}" alt="KTSD Logo" style="height: 38px; filter: brightness(0) invert(1);" onerror="this.style.display='none';">
+    </div>
+    <p>&copy; 2026 KTSD - Kozmetik ve Temizlik Ürünleri Sanayicileri Derneği. Tüm hakları saklıdır.</p>
+    <p style="margin-top: 0.4rem;">
+      <a href="https://www.ktsd.org.tr/iletisim" target="_blank">İletişim</a> &bull; 
+      <a href="https://www.ktsd.org.tr" target="_blank">Resmi Web Sitesi</a>
+    </p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

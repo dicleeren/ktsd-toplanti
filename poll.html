@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ poll.title }} - KTSD Toplantı Anketi{% endblock %}
+
+{% block content %}
+
+<!-- Share Banner -->
+<div class="share-banner">
+  <div class="share-banner-info">
+    <h3><i class="fas fa-link" style="color: var(--ktsd-teal);"></i> Anket Paylaşım Bağlantısı</h3>
+    <p>Bu bağlantıyı üyelerinize göndererek uygun oldukları tarihleri işaretlemelerini sağlayın.</p>
+  </div>
+  <div class="share-input-group">
+    <input type="text" id="share-poll-url" value="{{ request.url }}" readonly>
+    <button type="button" id="copy-share-url">
+      <i class="fas fa-copy"></i> Linki Kopyala
+    </button>
+  </div>
+</div>
+
+<!-- Poll Header Info Card -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <span class="badge-status" style="width: auto; height: auto; border-radius: 4px; padding: 0.25rem 0.6rem; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.5rem; display: inline-block; {% if poll.status == 'finalized' %}background: #D1FAE5; color: #065F46;{% else %}background: #E0F2FE; color: #0369A1;{% endif %}">
+        {% if poll.status == 'finalized' %}<i class="fas fa-check-circle"></i> Tarih Kesinleşti{% else %}<i class="fas fa-vote-yea"></i> Üye Oylama Sayfası{% endif %}
+      </span>
+      <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: var(--ktsd-navy); line-height: 1.3;">
+        {{ poll.title }}
+      </h2>
+    </div>
+    
+    <div>
+      <a href="{{ url_for('view_results', slug=poll.slug) }}" class="btn-outline" style="border-color: var(--ktsd-navy); color: var(--ktsd-navy);">
+        <i class="fas fa-user-shield"></i> KTSD Yetkili Girişi (Sonuçlar)
+      </a>
+    </div>
+  </div>
+
+  {% if poll.description %}
+    <div style="background: #F8FAFC; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border-left: 4px solid var(--ktsd-teal); margin-bottom: 1.5rem; color: #334155; font-size: 0.95rem;">
+      <strong><i class="fas fa-info-circle" style="color: var(--ktsd-teal);"></i> Toplantı Notu / Gündemi:</strong> {{ poll.description }}
+    </div>
+  {% endif %}
+
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.9rem; color: #64748B;">
+    <div><i class="fas fa-user-tier" style="color: var(--ktsd-navy);"></i> <strong>Düzenleyen:</strong> {{ poll.organizer_name }} {% if poll.organizer_company %}({{ poll.organizer_company }}){% endif %}</div>
+    <div><i class="fas fa-shield-alt" style="color: var(--ktsd-teal);"></i> <strong>Gizlilik:</strong> Üye Oylaması (Toplu sonuçlar KTSD Yetkililerine özeldir)</div>
+  </div>
+</div>
+
+<!-- Finalized Notice Banner (if poll is finalized) -->
+{% if poll.status == 'finalized' and final_option %}
+  <div class="finalized-banner">
+    <h3><i class="fas fa-check-circle"></i> Toplantı Tarihi Kesinleşti</h3>
+    <p>Toplantı organizatörü tarafından aşağıdaki tarih ve saat belirlenmiştir:</p>
+    <div class="final-date-box">
+      <i class="fas fa-calendar-check" style="color: var(--ktsd-teal);"></i> {{ final_option.date_val }} &bull; {{ final_option.time_val }}
+    </div>
+  </div>
+{% endif %}
+
+<!-- Success Confirmation Banner after Member Votes -->
+{% if voted_flag %}
+  <div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 2px solid #A7F3D0; border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem; text-align: center;">
+    <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #059669; margin-bottom: 0.5rem; display: block;"></i>
+    <h3 style="font-family: 'Outfit', sans-serif; color: #065F46; font-size: 1.4rem;">Katılım Durumunuz Kaydedilmiştir!</h3>
+    <p style="color: #047857; font-size: 0.95rem; margin-top: 0.3rem;">Toplantı tarihi kesinleştiğinde KTSD Genel Sekreterliği tarafından bilgilendirme yapılacaktır. Katılımınız için teşekkür ederiz.</p>
+  </div>
+{% endif %}
+
+<!-- Member Vote Form Section -->
+{% if poll.status == 'active' %}
+  <div class="vote-section-card">
+    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; color: var(--ktsd-navy); margin-bottom: 0.5rem;">
+      <i class="fas fa-user-check" style="color: var(--ktsd-teal);"></i> Katılım Durumunuzu İşaretleyin
+    </h3>
+    <p style="font-size: 0.88rem; color: #64748B;">Lütfen adınızı ve kurumunuzu girerek aşağıdaki alternatif tarihler için durumunuzu seçin.</p>
+
+    <form action="{{ url_for('submit_vote', slug=poll.slug) }}" method="POST" style="margin-top: 1.25rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="member_name">Adınız Soyadınız <span class="required">*</span></label>
+          <input type="text" id="member_name" name="member_name" class="form-control" placeholder="Örn: Mehmet Özkan" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="member_company">Üye Kurum / Firma</label>
+          <input type="text" id="member_company" name="member_company" class="form-control" placeholder="Örn: ABC Kimya Sanayi A.Ş.">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="member_email">E-posta Adresiniz</label>
+          <input type="email" id="member_email" name="member_email" class="form-control" placeholder="Örn: mehmet@abckimya.com">
+        </div>
+      </div>
+
+      <div class="vote-options-grid">
+        {% for opt in poll.options %}
+          <div class="vote-option-card">
+            <div style="font-weight: 700; color: var(--ktsd-navy); font-size: 0.98rem; font-family: 'Outfit', sans-serif;">
+              <i class="fas fa-calendar-day" style="color: var(--ktsd-teal);"></i> {{ opt.date_val }}
+            </div>
+            <div style="font-size: 0.85rem; color: #64748B; margin-top: 0.25rem;">
+              <i class="fas fa-clock"></i> {{ opt.time_val }}
+            </div>
+
+            <div class="vote-btn-group">
+              <label class="btn-vote-toggle yes-btn active">
+                <input type="radio" name="opt_{{ opt.id }}" value="yes" checked>
+                <i class="fas fa-check"></i>
+                <span>Uygun</span>
+              </label>
+
+              <label class="btn-vote-toggle maybe-btn">
+                <input type="radio" name="opt_{{ opt.id }}" value="maybe">
+                <i class="fas fa-question"></i>
+                <span>Olabilir</span>
+              </label>
+
+              <label class="btn-vote-toggle no-btn">
+                <input type="radio" name="opt_{{ opt.id }}" value="no">
+                <i class="fas fa-times"></i>
+                <span>Uygun Değil</span>
+              </label>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div style="text-align: right; margin-top: 1.5rem;">
+        <button type="submit" class="btn-teal" style="font-size: 1.05rem; padding: 0.85rem 2rem;">
+          <i class="fas fa-paper-plane"></i> Katılım Durumumu Kaydet
+        </button>
+      </div>
+    </form>
+  </div>
+{% endif %}
+
+<!-- Notice Footer Card for KTSD Staff -->
+<div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: #F1F5F9; border-radius: var(--radius-md); border: 1px solid #CBD5E1;">
+  <p style="font-size: 0.9rem; color: #475569;">
+    <i class="fas fa-lock" style="color: var(--ktsd-navy);"></i> Toplu anket sonuçları ve katılım matrisi <strong>sadece yetkili KTSD çalışanlarına</strong> özeldir.
+  </p>
+  <a href="{{ url_for('view_results', slug=poll.slug) }}" class="btn-outline" style="margin-top: 0.75rem; display: inline-flex;">
+    <i class="fas fa-key"></i> KTSD Yetkili Girişi ile Sonuçları Görüntüle
+  </a>
+</div>
+
+{% endblock %}

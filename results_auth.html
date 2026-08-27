@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}KTSD Yetkili Girişi - {{ poll.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 550px; margin: 3rem auto;">
+  <div class="card" style="box-shadow: var(--shadow-lg); border-top: 5px solid var(--ktsd-navy);">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div class="ktsd-logo-badge" style="margin: 0 auto 1rem auto; width: 60px; height: 60px; font-size: 1.5rem;">
+        KTSD
+      </div>
+      <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: var(--ktsd-navy);">
+        KTSD Yetkili Çalışan Girişi
+      </h2>
+      <p style="font-size: 0.88rem; color: #64748B; margin-top: 0.3rem;">
+        <strong>{{ poll.title }}</strong> anketi toplu sonuçlarını görüntülemek için yetkili kurumsal e-posta adresinizi giriniz.
+      </p>
+    </div>
+
+    <div style="background: #F0F9FF; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid #BAE6FD; margin-bottom: 1.5rem; font-size: 0.85rem; color: #0369A1;">
+      <i class="fas fa-shield-alt" style="color: var(--ktsd-teal);"></i> 
+      Bu ankete ait toplu sonuçlar, üye katılım matrisi ve Excel indirme yetkisi <strong>tanımlı {{ authorized_count }} KTSD çalışanı mail adresine</strong> özeldir.
+    </div>
+
+    <form action="{{ url_for('staff_auth', slug=poll.slug) }}" method="POST">
+      <div class="form-group">
+        <label class="form-label" for="staff_email">
+          <i class="fas fa-envelope" style="color: var(--ktsd-navy);"></i> Yetkili KTSD E-posta Adresiniz
+        </label>
+        <input type="email" id="staff_email" name="staff_email" class="form-control" placeholder="Örn: toplanti@ktsd.org.tr veya info@ktsd.org.tr" required autofocus>
+      </div>
+
+      <button type="submit" class="btn-primary" style="width: 100%; font-size: 1rem; padding: 0.85rem;">
+        <i class="fas fa-key"></i> Giriş Yap ve Sonuçları Aç
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem;">
+      <a href="{{ url_for('view_poll', slug=poll.slug) }}" style="color: #64748B; text-decoration: none;">
+        <i class="fas fa-arrow-left"></i> Üye Oy Kullanma Sayfasına Dön
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

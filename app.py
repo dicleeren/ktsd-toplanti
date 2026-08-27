@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ktsd-sec-key-2026-secret-poll-token-auth-restricted'
 
-# Ensure instance directory exists for SQLite DB on cloud servers (Render/Linux)
+# Absolute pathing for database in instance folder
 basedir = os.path.abspath(os.path.dirname(__file__))
 instance_path = os.path.join(basedir, 'instance')
 os.makedirs(instance_path, exist_ok=True)
@@ -78,8 +78,14 @@ class VoteDetail(db.Model):
     option_id = db.Column(db.Integer, db.ForeignKey('options.id'), nullable=False)
     status = db.Column(db.String(10), nullable=False)
 
-with app.app_context():
-    db.create_all()
+def init_db():
+    try:
+        with app.app_context():
+            db.create_all()
+    except Exception as e:
+        print("Init DB warning:", e)
+
+init_db()
 
 # Helper Turkish Date Formatter
 WEEKDAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
@@ -96,12 +102,18 @@ def format_tr_date(date_str):
 
 @app.route('/')
 def index():
-    recent_polls = Poll.query.order_by(Poll.created_at.desc()).limit(10).all()
+    init_db()
+    try:
+        recent_polls = Poll.query.order_by(Poll.created_at.desc()).limit(10).all()
+    except Exception:
+        db.create_all()
+        recent_polls = []
     default_emails_str = ", ".join(DEFAULT_STAFF_EMAILS)
     return render_template('index.html', recent_polls=recent_polls, default_emails_str=default_emails_str)
 
 @app.route('/create', methods=['POST'])
 def create_poll():
+    init_db()
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
     organizer_name = request.form.get('organizer_name', '').strip()
@@ -158,6 +170,7 @@ def create_poll():
 
 @app.route('/poll/<slug>')
 def view_poll(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     voted_flag = request.args.get('voted', '0') == '1'
 
@@ -172,6 +185,7 @@ def view_poll(slug):
 
 @app.route('/poll/<slug>/vote', methods=['POST'])
 def submit_vote(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
     if poll.status == 'finalized':
@@ -212,6 +226,7 @@ def submit_vote(slug):
 
 @app.route('/poll/<slug>/results')
 def view_results(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
     authorized_list = poll.get_authorized_email_list()
@@ -263,6 +278,7 @@ def view_results(slug):
 
 @app.route('/poll/<slug>/auth', methods=['POST'])
 def staff_auth(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     email_input = request.form.get('staff_email', '').strip().lower()
 
@@ -285,6 +301,7 @@ def staff_logout(slug):
 
 @app.route('/poll/<slug>/vote/delete/<int:vote_id>', methods=['POST'])
 def delete_vote(slug, vote_id):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
     authorized_list = poll.get_authorized_email_list()
@@ -301,6 +318,7 @@ def delete_vote(slug, vote_id):
 
 @app.route('/poll/<slug>/finalize', methods=['POST'])
 def finalize_poll(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
     authorized_list = poll.get_authorized_email_list()
@@ -320,6 +338,7 @@ def finalize_poll(slug):
 
 @app.route('/poll/<slug>/reopen', methods=['POST'])
 def reopen_poll(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
     
     authorized_list = poll.get_authorized_email_list()
@@ -336,6 +355,7 @@ def reopen_poll(slug):
 
 @app.route('/poll/<slug>/export')
 def export_csv(slug):
+    init_db()
     poll = Poll.query.filter_by(slug=slug).first_or_404()
 
     authorized_list = poll.get_authorized_email_list()
